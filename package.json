@@ -1,0 +1,22 @@
+{
+  "name": "js-equihash-solver",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nginnever/js-equihash-solver.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nginnever/js-equihash-solver/issues"
+  },
+  "homepage": "https://github.com/nginnever/js-equihash-solver#readme",
+  "dependencies": {
+    "blake2": "^1.4.0"
+  }
+}
