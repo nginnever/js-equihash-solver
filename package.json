@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/nginnever/js-equihash-solver#readme",
   "dependencies": {
+    "big-integer": "^1.6.16",
     "blake2": "^1.4.0"
   }
 }
