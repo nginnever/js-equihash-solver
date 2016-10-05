@@ -18,6 +18,11 @@
   "homepage": "https://github.com/nginnever/js-equihash-solver#readme",
   "dependencies": {
     "big-integer": "^1.6.16",
-    "blake2": "^1.4.0"
+    "binascii": "0.0.1",
+    "blake2": "^1.4.0",
+    "bufferpack": "0.0.6",
+    "libsodium": "^0.4.1",
+    "libsodium-wrappers": "^0.4.1",
+    "python-struct": "^1.0.4"
   }
 }
