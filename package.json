@@ -19,6 +19,7 @@
   "dependencies": {
     "big-integer": "^1.6.16",
     "binascii": "0.0.1",
+    "bitwise-xor": "0.0.0",
     "blake2": "^1.4.0",
     "bufferpack": "0.0.6",
     "libsodium": "^0.4.1",

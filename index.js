@@ -6,6 +6,9 @@ const bufferpack = require('bufferpack')
 const struct = require('python-struct')
 const convert = require('./convert')
 const sodium = require('libsodium-wrappers')
+const xor = require('bitwise-xor')
+
+var concant = []
 
 // var inp = new ArrayBuffer(8)
 // console.log(inp.byteLength)
@@ -50,15 +53,15 @@ function has_collision (ha, hb, i, l) {
 
   //ha = ha.toString('hex')
   //hb = hb.toString('hex')
-
-  //console.log(ha)
-  //console.log(hb)
+  //console.log('comparing...')
+  //console.log(ha.toString('hex'))
+  //console.log(hb.toString('hex'))
   //console.log(i)
   //console.log(i*l/8)
 
   for (var j = (i-1)*l/8; j < i*l/8; j++) {
-    //console.log(ha[j] + ' : ' + hb[j])
     if (ha[j] !== hb[j]) {
+
       //console.log(ha[j] + ' : ' + hb[j])
       res = false
     }
@@ -70,14 +73,28 @@ function has_collision (ha, hb, i, l) {
 }
 
 function distinct_indices (a, b){
-  for (var i = 0; i < a; i++) {
-    for (var j = 0; j < b; j++) {
-      if (i === j) {
-        return false
-      }
-      return true
+  //console.log(a[0] + ' : ' + b[0])
+  var re 
+  for (var i = 0; i<a.length; i++) {
+    if (a[i] === b[i]) {
+      return false
+    } else {
+      re = true
     }
+    return re
   }
+}
+
+var hexer = function(a, b) {
+  var ax = parseInt(a,16)
+  if (isNaN(ax)) throw "First value is not a hexidecimal number"
+
+  var bx = parseInt(b,16)
+  if (isNaN(bx)) throw "Second value is not a hexidecimal number"
+
+  // easiest check
+  if (ax < bx) return -1
+  if (ax > bx) return  1
 }
 
 
@@ -123,52 +140,106 @@ function gbp_basic (digest, n, k) {
       //console.log(_X.toString('hex'))
     }
     //console.log(X)
-    for (var i = 1; i < k; i++) {
-      console.log('ROUND NUMBER: ' + i)
+    for (var _i = 1; _i < k; _i++) {
+      console.log('ROUND NUMBER: ' + _i)
       console.log('SORTING LIST')
       X.sort((o1, o2) => {
-        return o1.hash < o2.hash ? -1 : 1 
+        // console.log(o1.hash.length)
+        // for (var i = 0; i < o1.hash.length; i++) {
+        //   if (o1.hash[i] < o2.hash[i])
+        // }
+        var str1 = o1.hash.toString('hex')
+        var str2 = o2.hash.toString('hex')
+        return str1 < str2 ? -1 : 1 
       })
       console.log('DONE SORTING')
       
       // DEBUG: the scoping on i is all whack
-      // for (var i = 0; i < 16; i++) {
-      //   console.log(X[i])
-      // }
+      for (var i = 0; i < 32; i++) {
+        //console.log(X[X.length - i])
+        console.log(X[X.length -1 -i].hash.toString('hex') + ' ( ' +X[X.length -1 -i].index+',)' )
+      }
 
       console.log('FINDING COLLISIONS')
       var Xc = []
 
-      //while (X.length > 0) {
+      while (X.length > 0) {
         var j = 1
         while (j < X.length) {//X.length) {
-          if (!has_collision(X[X.length - 1].hash, X[(X.length - 1) - j].hash, i, collision_length)){
+          //console.log('------')
+          if (!has_collision(X[X.length - 1].hash, X[(X.length - 1) - j].hash, _i, collision_length)){
             
-            console.log('no collision')
-            j++
-            console.log(j)
-          } else {
-            console.log('COLLISION')
-
-            for (var l = 0; l < j-1; l++) {
-              for (var m = l+1; m < j; m++) {
-                // check that there are no duplicate indices'
-                if (distinct_indices(X[(X.length - 1) - l].index, X[(X.length -1) - m].index)) {
-                  console.log('indicies are different')
-                  break
-                }
-              }
-            }
+            //console.log('no collision')
+            //console.log(X[X.length - 1].hash)
+            //console.log(X[X.length - 1 - j].hash)
             break
+          } else {
+            
+            j++
+            //console.log('j: '+j)
+            //console.log('found collision')
           }
-
-          //if(j === 1) X = []
-          //console.log(j)
         }
-        //X = []
-      //}
+            
+        for (var l = 0; l < j-1; l++) { // 0, 1, 2, 3
+          //console.log('l: ' + l)
+          //return
+          for (var m = l+1; m < j; m++) { // [0, 1, 2, 3] - [1, 2, 3] - [2, 3] - [3] 
+            //console.log('m: ' + m)
+            //return
+            // check that there are no duplicate indices'
+            //console.log('******')
+            //console.log(X[(X.length - 1) - l].index)
+            //console.log(X[(X.length - 1) - l].hash)
+            //console.log(X[(X.length -1) - m].index)
+            //console.log(X[(X.length -1) - m].hash)
+            //console.log('******')
+            if (distinct_indices(X[(X.length - 1) - l].index, X[(X.length -1) - m].index)) {
+
+              //console.log('distinct')
+              // console.log('('+X[(X.length - 1) - l].index+',)')
+              // console.log('('+X[(X.length - 1) - m].index+',)')
+              //return
+              if (X[(X.length - 1)-l].index[0] < X[(X.length - 1)-m].index[0]) {
+                concant = X[(X.length - 1)-l].index.slice()
+                concant.push(X[(X.length - 1)-m].index[0])
+                //console.log('a < b')
+                //console.log(concant)
+              } else {
+                concant = X[(X.length - 1)-m].index.slice()
+                concant.push(X[(X.length - 1)-l].index[0])
+                //console.log('a > b')
+                //console.log(concant)
+              }
+
+              // INDICES ARE NOT TUPLE STORED EXACTLY RIGHT
+              Xc.push({
+                hash: xor(X[X.length-1-l].hash, X[X.length-1-m].hash),
+                index: concant
+              })
+              //console.log(Xc)
+              //console.log(xor(X[X.length-1-l].hash, X[X.length-1-m].hash).toString('hex'))
+              //console.log(Xc[m].hash.toString('hex'))
+              //return
+            }
+            //return
+          }
+        }
+        //return
+        while(j > 0) {
+          X.pop(X.length - 1 - j)
+          j -= 1
+        }
+        //console.log(X.length)
+
+      }
+      X = Xc
+      Xc = []
+      //console.log(X)
+      console.log('Done with new list!')
     }
     //console.log(X)
+    console.log('FOUND SOLUTIONS!')
     reolve()
   })
 }
