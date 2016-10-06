@@ -77,7 +77,7 @@ function gbp_basic (digest, n, k) {
     // TODO: not sure how this is calculated
     var hash_length = (k+1)*(Math.floor((collision_length+7)/8))
 
-    // TODO: No idea wtf this is
+    // TODO: No idea how this is calculated
     var indices_per_hash_output = Math.floor(512/n)
 
     var L = []
@@ -86,8 +86,6 @@ function gbp_basic (digest, n, k) {
     // generate list of hashes of size 2^(collision_len + 1) for an average of 
     // 2 solutions per sort
     // N = 131072 with k=5 n=96
-    console.log(Math.pow(2, collision_length+1))
-
     // loop N = 131072 times with 2^n/k+1
     for (var i = 0; i < Math.pow(2, collision_length+1); i++) { // Math.pow(2, collision_length+1)
       var r = i%indices_per_hash_output
@@ -102,7 +100,8 @@ function gbp_basic (digest, n, k) {
         tmp_hash = curr_digest.digest()
       }
       // TODO:
-      // expand the hash to match n = 200? could answer above question
+      // expand the hash to match n = 96 for the test case here
+      // first slice then pad to get the desired 12 bytes from n
       var _L = convert.expand_array(tmp_hash.slice(r*n/8, (r+1)*n/8), hash_length, collision_length)
 
       // create tuples (hash, index)
