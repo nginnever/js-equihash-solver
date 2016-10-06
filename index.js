@@ -11,6 +11,9 @@ const xor = require('bitwise-xor')
 // temporary array for holding the tuples of colliding hash indices
 var concat = []
 
+var start
+var stop
+
 // Javascript left shift operator only works on 32 bit numbers
 function leftShift(number, shift) {
   return number * Math.pow(2, shift)
@@ -47,6 +50,43 @@ function has_collision (ha, hb, i, l) {
   }
   
   return res
+}
+
+function count_zeroes (h) {
+  // convert to hex string, then to bin string
+  var tester = hexToBinary(h.toString('hex'))
+
+  // count leading zeroes
+  var counter = 0
+  for (var i = 0; i < tester.result.length; i++) {
+    if (tester.result[i] === '0') {
+      counter++
+    } else {
+      //console.log(counter)
+      return counter
+    }
+  }
+}
+
+function hexToBinary(s) {
+    var i, k, part, ret = ''
+    // lookup table for easier conversion. '0' characters are padded for '1' to '7'
+    var lookupTable = {
+        '0': '0000', '1': '0001', '2': '0010', '3': '0011', '4': '0100',
+        '5': '0101', '6': '0110', '7': '0111', '8': '1000', '9': '1001',
+        'a': '1010', 'b': '1011', 'c': '1100', 'd': '1101',
+        'e': '1110', 'f': '1111',
+        'A': '1010', 'B': '1011', 'C': '1100', 'D': '1101',
+        'E': '1110', 'F': '1111'
+    }
+    for (i = 0; i < s.length; i += 1) {
+        if (lookupTable.hasOwnProperty(s[i])) {
+            ret += lookupTable[s[i]]
+        } else {
+            return { valid: false }
+        }
+    }
+    return { valid: true, result: ret }
 }
 
 // helper function to check the indices of colliding hashes
@@ -186,9 +226,53 @@ function gbp_basic (digest, n, k) {
       Lc = []
       console.log('Done with new list!')
     }
+    // k+1) Find a collision on last 2n(k+1) bits
+    console.log('final round...')
+    console.log('sorting list')
 
-    console.log('FOUND SOLUTIONS!')
-    reolve()
+    L.sort((o1, o2) => {
+      var str1 = o1.hash.toString('hex')
+      var str2 = o2.hash.toString('hex')
+      return str1 < str2 ? -1 : 1 
+    })
+    //console.log(L)
+    console.log('finding solutions')
+    var solns = []
+
+    while (L.length > 0) {
+      var j = 1
+      while (j < L.length) {
+        if (!has_collision(L[L.length - 1].hash, L[(L.length - 1) - j].hash, k, collision_length) &&
+            !has_collision(L[L.length - 1].hash, L[(L.length - 1) - j].hash, k+1, collision_length)) {
+          break
+        } else {
+          j++
+        }
+      }
+
+      for (var l = 0; l < j-1; l++) { // 0, 1, 2, 3...
+        for (var m = l+1; m < j; m++) { // [0, 1, 2, 3] - [1, 2, 3] - [2, 3] - [3]...
+          var res = xor(L[L.length-1-l].hash, L[L.length-1-m].hash)
+          if (count_zeroes(res) === n && distinct_indices(L[(L.length - 1) - l].index, L[(L.length -1) - m].index)) {
+            console.log('weee found a solution!!!')
+            console.log(L[L.length-1-l].hash.toString('hex'))
+            console.log(L[L.length-1-m].hash.toString('hex'))
+              // if (L[(L.length - 1)-l].index[0] < L[(L.length - 1)-m].index[0]) {
+              //   concat = L[(L.length - 1)-l].index.slice()
+              //   solns.push(L[(L.length - 1)-m].index[0])
+              // } else {
+              //   concat = L[(L.length - 1)-m].index.slice()
+              //   solns.push(L[(L.length - 1)-l].index[0])
+              // }
+          }
+        }
+      }
+      while(j > 0) {
+        L.pop(L.length - 1 - j)
+        j -= 1
+      }
+      resolve()
+    }
   })
 }
 
@@ -202,8 +286,8 @@ function mine (n, k, d) {
   var b = ba.unhexlify(prev_hash)
 
   while (true) {
-    var date = new Date();
-    console.log(date)
+    start = new Date().getTime()
+    console.log(new Date())
     // H(I||...)
     var person = zcash_person(n,k)
     var digest = blake2.createHash('blake2b', {digestLength: (512/n)*n/8})
@@ -224,6 +308,10 @@ function mine (n, k, d) {
       gbp_basic(curr_digest, n, k)
         .then(() => {
           console.log('finished solving!')
+          stop = new Date().getTime()
+          var t = stop - start
+          t = t / 1000
+          console.log('time: ' +  t + ' seconds')
         })
 
       nonce += 1

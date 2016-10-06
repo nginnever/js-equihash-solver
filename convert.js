@@ -2,11 +2,6 @@
 
 const ba = require('binascii')
 
-// convert binary to ascii
-var res = str.match(/[01]{8}/g).map(function(v) {
-    return String.fromCharCode( parseInt(v,2) )
-}).join('')
-
 function dec2bin(dec){
   return (dec >>> 0).toString(2)
 }
@@ -100,6 +95,9 @@ module.exports = {
       acc_bits -= 8
       out[i] = (rightShift(acc_value, acc_bits)) & 0xFF
     }
+
     return out
+
   }
 }
+
